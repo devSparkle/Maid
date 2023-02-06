@@ -4,7 +4,7 @@
 local Maid = {}
 Maid.__index = Maid
 
-type MaidTask = () -> () | Instance | RBXScriptConnection | Maid
+type MaidTask = () -> () | Instance | RBXScriptConnection | Maid | thread
 type Maid = typeof(setmetatable({_Tasks = {}:: {MaidTask}}, Maid))
 
 --// Functions
@@ -33,6 +33,8 @@ function Maid:DoCleaning()
 		
 		if TaskType == "RBXScriptConnection" or (IsTable and Task.Disconnect) then
 			Task:Disconnect()
+		elseif TaskType == "thread" then
+			coroutine.close(Task)
 		elseif TaskType == "Instance" or (IsTable and Task.Destroy) then
 			Task:Destroy()
 		else

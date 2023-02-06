@@ -18,7 +18,6 @@ function Maid:GiveTask(Task: MaidTask)
 end
 
 function Maid:LinkToInstance(Object: Instance)
-	self:GiveTask(Object)
 	self:GiveTask(Object.Destroying:Connect(function()
 		self:DoCleaning()
 	end))

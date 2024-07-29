@@ -1,0 +1,15 @@
+name: "Roblox"
+
+on:
+  push:
+    paths:
+      - "wally.toml"
+
+jobs:
+  workflow:
+    uses: ungms/.github/.github/workflows/roblox.yml@main
+    
+    secrets:
+      WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
+    permissions:
+        contents: write

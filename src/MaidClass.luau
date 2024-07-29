@@ -1,8 +1,17 @@
---!nonstrict
 --// Initialization
+
+local PlayerService = game:GetService("Players")
+local CollectionService = game:GetService("CollectionService")
 
 --[=[
 	@class Maid
+	
+	:::tip Overture
+	This class can be required through Overture using:
+	```lua
+		local MaidClass = Overture:LoadLibrary("MaidClass")
+	```
+	:::
 ]=]
 local Maid = {}
 Maid.__index = Maid
@@ -15,6 +24,10 @@ Maid.__index = Maid
 ]=]
 type MaidTask = () -> () | Instance | RBXScriptConnection | Maid | thread
 type Maid = typeof(setmetatable({_Tasks = {}:: {MaidTask}}, Maid))
+
+--// Variables
+
+local TRACKING_TAG = "MaidLinkToInstance"
 
 --// Functions
 
@@ -45,9 +58,26 @@ end
 	:::
 ]=]
 function Maid:LinkToInstance(Object: Instance)
-	self:GiveTask(Object.Destroying:Connect(function()
-		self:DoCleaning()
-	end))
+	if Object:IsA("Player") then
+		self:GiveTask(PlayerService.PlayerRemoving:Connect(function(RemovingPlayer)
+			if RemovingPlayer == Object then
+				self:DoCleaning()
+			end
+		end))
+	else
+		Object:AddTag(TRACKING_TAG)
+		
+		self:GiveTask(CollectionService:GetInstanceRemovedSignal(TRACKING_TAG):Connect(function(RemovedInstance)
+			if RemovedInstance == Object then
+				self:DoCleaning()
+			end
+		end))
+		
+		self:GiveTask(Object.Destroying:Connect(function()
+			self:DoCleaning()
+			Object:RemoveTag(TRACKING_TAG)
+		end))
+	end
 end
 
 --[=[
@@ -87,7 +117,10 @@ function Maid:DoCleaning()
 		if TaskType == "RBXScriptConnection" or (IsTable and Task.Disconnect) then
 			Task:Disconnect()
 		elseif TaskType == "thread" then
-			coroutine.close(Task)
+			xpcall(task.cancel, function(e)
+				local callerName = debug.info(4,"n")
+				warn(debug.traceback(`Maid could not cancel thread for "{callerName or "Unknown Function"}": {e}`)) 
+			end, Task)
 		elseif TaskType == "Instance" or (IsTable and Task.Destroy) then
 			Task:Destroy()
 		else

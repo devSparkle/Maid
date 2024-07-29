@@ -1,7 +1,16 @@
 --// Initialization
 
+local PlayerService = game:GetService("Players")
+
 --[=[
 	@class Maid
+	
+	:::tip Overture
+	This class can be required through Overture using:
+	```lua
+		local MaidClass = Overture:LoadLibrary("MaidClass")
+	```
+	:::
 ]=]
 local Maid = {}
 Maid.__index = Maid
@@ -35,18 +44,42 @@ function Maid:GiveTask(Task: MaidTask)
 	table.insert(self._Tasks, Task)
 end
 
+local function TryGetPlayer(Object: Instance)
+	local Parent = Object
+	local Player
+	
+	repeat
+		Player = PlayerService:GetPlayerFromCharacter(Object)
+		Parent = Parent.Parent
+	until Player or Parent == nil
+	
+	return Player
+end
+
 --[=[
 	Will listen for the provided Instance's destruction, and run [Maid:DoCleaning()] when this takes place.
-	
-	:::note
-	During cleanup, whether invoked by the object's destruction or another method
-	call; the maid will destroy any connections used to listen for destruction.
-	:::
 ]=]
 function Maid:LinkToInstance(Object: Instance)
-	self:GiveTask(Object.Destroying:Connect(function()
-		self:DoCleaning()
-	end))
+	if Object:IsA("Player") then
+		self:GiveTask(PlayerService.PlayerRemoving:Connect(function(RemovingPlayer)
+			if RemovingPlayer == Object then
+				self:DoCleaning()
+			end
+		end))
+	else
+		local Player = TryGetPlayer(Object)
+		
+		if Player then
+			self:LinkToInstance(Player)
+			self:GiveTask(Player.CharacterRemoving:Connect(function()
+				self:DoCleaning()
+			end))
+		end
+		
+		self:GiveTask(Object.Destroying:Connect(function()
+			self:DoCleaning()
+		end))
+	end
 end
 
 --[=[

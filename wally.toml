@@ -3,7 +3,5 @@ name = "devsparkle/maid"
 description = "A hassle-free Roblox library to manage object cleanup!"
 version = "2.1.0"
 license = "MIT"
-registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
-
-[dependencies]
+registry = "https://github.com/UpliftGames/wally-index"

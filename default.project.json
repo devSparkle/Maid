@@ -1,5 +1,5 @@
 {
-	"name": "devsparkle/maid",
+	"name": "maid",
 	"tree": {
 		"$path": "src/MaidClass.luau"
 	}
